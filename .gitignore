@@ -9,3 +9,4 @@ bazel-bazel-example
 .vagrant/
 Vagrantfile
 .idea/
+data/
