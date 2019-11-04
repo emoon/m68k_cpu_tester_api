@@ -41,6 +41,9 @@ typedef struct M68KTesterMemoryRange {
 
 // Context for testing one instruction type
 typedef struct M68KTesterContext {
+    const char* opcode;
+    // Low memory section
+    uint32_t stop_on_error;
     // Low memory section
     M68KTesterMemoryRange low_memory;
     // High memory section
@@ -49,15 +52,19 @@ typedef struct M68KTesterContext {
     M68KTesterMemoryRange test_memory;
     // name of the instruction
     char name[M68K_INST_NAME_SIZE + 1];
+    // path for loading data files from
+    char cpu_path[2048];
 } M68KTesterContext;
 
 // This is called for each test. user_data is pointer provided in M68KTester_run_tests which is passed down to the test
 // context holds memory ranges needed for the callback to handle to read the memory correctly and registes holds the current state
-//typedef void (*M68KTesterCallback)(void* user_data, const M68KTesterContext* context, const M68KTesterRegisters* regs);
 typedef void (*M68KTesterCallback)(void* user_data, const M68KTesterContext* context, const M68KTesterRegisters* regs);
 
 // Settings for the runner
 typedef struct M68KTesterRunSettings {
+    // name of the opcode to test (needs to match the names in the data directory)
+    // also "all" is supported to test all of them
+    const char* opcode;
     // CPU level to use (0 = 0000, 1 = 010, 2 = 020, 3 = 030, 4 = 040, 5 & 6 = 060)
     uint8_t cpu_level;
     // Verify undefined status registers
@@ -72,11 +79,12 @@ typedef struct M68KTesterInitResult {
     // Contains data needed for running the tests
     M68KTesterContext* context;
     // Error string set to null terminated string if error, otherwise NULL
+    // Notice this isn't currently used but will in the future.
     const char* error;
 } M68KTesterInitResult;
 
 // Init the tester
-M68KTesterInitResult M68KTester_init(const M68KTesterRunSettings* settings);
+M68KTesterInitResult M68KTester_init(const char* path, const M68KTesterRunSettings* settings);
 
 // Run the tests. Returns 1 of tests are ok otherwise 0
 // This function will run the tests for a given instruction(s) and the callback will be called for each

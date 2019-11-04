@@ -21,6 +21,7 @@
 
 #include "m68k_cputester.h"
 #include "cputest_defines.h"
+#include "capstone/include/capstone/capstone.h"
 
 typedef unsigned int uae_u32;
 typedef int uae_s32;
@@ -51,6 +52,10 @@ struct registers
 	uae_u32 srcaddr, dstaddr;
 };
 
+static M68KTesterCallback s_cpu_callback;
+static void* s_cpu_user_data;
+static M68KTesterContext* s_cpu_context;
+static csh s_cs_handle;
 static struct registers test_regs;
 static struct registers last_registers;
 static struct registers regs;
@@ -104,7 +109,6 @@ static char outbuffer[40000];
 #else
 static char outbuffer[4000];
 #endif
-static char tmpbuffer[1024];
 static char *outbp;
 static int infoadded;
 static int errors;
@@ -130,11 +134,15 @@ static uae_u8 *allocate_absolute(uae_u32 addr, uae_u32 size)
 {
 	return calloc(1, size);
 }
+/*
 static void free_absolute(uae_u32 addr, uae_u32 size)
 {
 }
+*/
+/*
 static void execute_test000(struct registers *regs)
 {
+	regs->regs[0] <<= 8;
 }
 static void execute_test010(struct registers *regs)
 {
@@ -145,6 +153,7 @@ static void execute_test020(struct registers *regs)
 static void execute_testfpu(struct registers *regs)
 {
 }
+*/
 static uae_u32 tosuper(uae_u32 v)
 {
 	return 0;
@@ -198,6 +207,20 @@ extern void flushcache(uae_u32);
 extern void *error_vector;
 
 #endif
+
+static void join_path(char* dest, const char* path, const char* file, int len) {
+    size_t path_len = strlen(path);
+
+    if (path_len > 0) {
+        if (path[path_len - 1] == '/' || path[path_len - 1] == '\\') {
+            snprintf(dest, len, "%s%s", path, file);
+        } else {
+            snprintf(dest, len, "%s/%s", path, file);
+        }
+    } else {
+        strncpy(dest, file, len);
+    }
+}
 
 struct accesshistory
 {
@@ -257,16 +280,18 @@ static uint32_t translate_to_m68k(uint8_t* addr) {
 		return v;
 	}
 
-	printf("FATAL: %p was not found within the three memory ranges\n", addr);
-	printf("       low_memory (%08x - %08x) %p - %p",
+	printf("FATAL: %p was not found within the three memory ranges:\n", addr);
+	printf("       low_memory (%08x - %08x) %p - %p\n",
 			test_low_memory_start, test_low_memory_start + test_low_memory_end,
 			low_memory, low_memory + test_low_memory_end);
-	printf("       high_memory (%08x - %08x) %p - %p",
+	printf("       high_memory (%08x - %08x) %p - %p\n",
 			test_high_memory_start, test_high_memory_start + test_high_memory_end,
 			high_memory, high_memory + test_high_memory_end);
-	printf("       test_memory (%08x - %08x) %p - %p",
+	printf("       test_memory (%08x - %08x) %p - %p\n",
 			test_memory_addr, test_memory_addr + test_memory_end,
 			test_memory, test_memory + test_memory_end);
+
+	*((volatile int*)0) = 0xfff;
 
 	exit(1);
 
@@ -290,18 +315,22 @@ static uint8_t* translate_to_native(uint32_t addr) {
 	if (high) { return high; }
 	if (test) { return test; }
 
+	/*
 	printf("FATAL: %08x was not found within the three memory ranges\n", addr);
-	printf("       low_memory (%08x - %08x) %p - %p",
+	printf("       low_memory (%08x - %08x) %p - %p\n",
 			test_low_memory_start, test_low_memory_start + test_low_memory_end,
 			low_memory, low_memory + test_low_memory_end);
-	printf("       high_memory (%08x - %08x) %p - %p",
+	printf("       high_memory (%08x - %08x) %p - %p\n",
 			test_high_memory_start, test_high_memory_start + test_high_memory_end,
 			high_memory, high_memory + test_high_memory_end);
-	printf("       test_memory (%08x - %08x) %p - %p",
+	printf("       test_memory (%08x - %08x) %p - %p\n",
 			test_memory_addr, test_memory_addr + test_memory_end,
 			test_memory, test_memory + test_memory_end);
 
+	*((volatile int*)0) = 0xfff;
+
 	exit(1);
+	*/
 
 	return 0;
 }
@@ -434,8 +463,9 @@ static void end_test(void)
 
 static uae_u8 *load_file(const char *path, const char *file, uae_u8 *p, int *sizep, int exiterror)
 {
-	char fname[256];
-	sprintf(fname, "%s%s", path, file);
+	char fname[2048];
+	join_path(fname, path, file, sizeof(fname));
+
 	FILE *f = fopen(fname, "rb");
 	if (!f) {
 		if (exiterror) {
@@ -915,7 +945,7 @@ static void addinfo_bytes(char *name, uae_u8 *src, uae_u32 address, int offset, 
 }
 */
 
-extern uae_u16 disasm_instr(uae_u16 *, char *);
+//extern uae_u16 disasm_instr(uae_u16 *, char *);
 
 static void addinfo(void)
 {
@@ -928,43 +958,18 @@ static void addinfo(void)
 	outbp += strlen(outbp);
 
 	uae_u16 *code;
-#ifndef M68K
-	uae_u16 swapped[16];
-	for (int i = 0; i < 16; i++) {
-		swapped[i] = (opcode_memory[i * 2 + 0] << 8) | (opcode_memory[i * 2 + 1] << 0);
-	}
-	code = swapped;
-#else
 	code = (uae_u16*)opcode_memory;
-#endif
-	uae_u8 *p = opcode_memory;
-	int offset = 0;
-	int lines = 0;
-	while (lines++ < 10) {
-		tmpbuffer[0] = 0;
-		int v = disasm_instr(code + offset, tmpbuffer);
-		for (int i = 0; i < v; i++) {
-			uae_u16 v = (p[i * 2 + 0] << 8) | (p[i * 2 + 1]);
-			sprintf(outbp, "%s%04x", i ? " " : (lines == 0 ? "\t\t" : "\t"), v);
-			outbp += strlen(outbp);
-		}
-		sprintf(outbp, " %s\n", tmpbuffer);
+
+	cs_insn* insn = 0;
+
+	size_t count = cs_disasm(s_cs_handle, (uint8_t*)code, 32, 0, 0, &insn);
+
+	if (count >= 1) {
+		sprintf(outbp, "\t%s\t%s\n", insn[0].mnemonic, insn[0].op_str);
+		cs_free(insn, count);
 		outbp += strlen(outbp);
-		if (v <= 0)
-			break;
-		while (v > 0) {
-			offset++;
-			p += 2;
-			if (code[offset] == 0x4afc) {
-				v = -1;
-				break;
-			}
-			v--;
-		}
-		if (v < 0)
-			break;
 	}
-	*outbp = 0;
+
 	/*
 	if (code[0] == 0x4e73 || code[0] == 0x4e74 || code[0] == 0x4e75) {
 		addinfo_bytes("P", stackaddr, stackaddr_ptr, -SIZE_STORED_ADDRESS_OFFSET, SIZE_STORED_ADDRESS);
@@ -1727,6 +1732,7 @@ static void process_test(uae_u8 *p)
 
 						reset_error_vectors();
 
+						/*
 						if (cpu_lvl == 1) {
 							execute_test010(&test_regs);
 						} else if (cpu_lvl >= 2) {
@@ -1737,6 +1743,9 @@ static void process_test(uae_u8 *p)
 						} else {
 							execute_test000(&test_regs);
 						}
+						*/
+
+						s_cpu_callback(s_cpu_user_data, s_cpu_context, (const M68KTesterRegisters*)&test_regs);
 
 						if (ccr_mask == 0 && ccr == 0)
 							ignore_sr = 1;
@@ -1805,6 +1814,7 @@ end:
 
 }
 
+/*
 static void freestuff(void)
 {
 	if (test_memory && test_memory_addr)
@@ -1813,7 +1823,14 @@ static void freestuff(void)
 	getchar();
 #endif
 }
+*/
 
+static uae_u32 read_u32(FILE* f)
+{
+	uae_u8 data[4] = { 0 };
+	fread(data, 1, 4, f);
+	return gl(data);
+}
 
 static int test_mnemo(const char *path, const char *opcode)
 {
@@ -1834,51 +1851,36 @@ static int test_mnemo(const char *path, const char *opcode)
 		printf("Couldn't open '%s'\n", tfname);
 		exit(0);
 	}
-	fread(data, 1, 4, f);
-	v = gl(data);
+	v = read_u32(f);
 	if (v != DATA_VERSION) {
 		printf("Invalid test data file (header)\n");
 		exit(0);
 	}
-	fread(data, 1, 4, f);
-	starttimeid = gl(data);
-	fread(data, 1, 4, f);
-	hmem_rom = (uae_s16)(gl(data) >> 16);
-	lmem_rom = (uae_s16)(gl(data) & 65535);
-	fread(data, 1, 4, f);
-	test_memory_addr = gl(data);
-	fread(data, 1, 4, f);
-	test_memory_size = gl(data);
+
+	starttimeid = read_u32(f);
+	uae_u32 hmem_lmem = read_u32(f);
+	hmem_rom = (uae_s16)(hmem_lmem >> 16);
+	lmem_rom = (uae_s16)(hmem_lmem & 65535);
+	test_memory_addr = read_u32(f);
+	test_memory_size = read_u32(f);
 	test_memory_end = test_memory_addr + test_memory_size;
-	fread(data, 1, 4, f);
-	opcode_memory_addr = gl(data);
-	fread(data, 1, 4, f);
-	lvl = (gl(data) >> 16) & 15;
-	interrupt_mask = (gl(data) >> 20) & 7;
-	addressing_mask = (gl(data) & 0x80000000) ? 0xffffffff : 0x00ffffff;
-	sr_undefined_mask = gl(data) & 0xffff;
-	fread(data, 1, 4, f);
-	fpu_model = gl(data);
-	fread(data, 1, 4, f);
-	test_low_memory_start = gl(data);
-	fread(data, 1, 4, f);
-	test_low_memory_end = gl(data);
-	fread(data, 1, 4, f);
-	test_high_memory_start = gl(data);
-	fread(data, 1, 4, f);
-	test_high_memory_end = gl(data);
-	fread(data, 1, 4, f);
-	safe_memory_start = gl(data);
-	fread(data, 1, 4, f);
-	safe_memory_end = gl(data);
-	fread(data, 1, 4, f);
-	user_stack_memory = gl(data);
-	fread(data, 1, 4, f);
-	super_stack_memory = gl(data);
+	opcode_memory_addr = read_u32(f);
+	uae_u32 lvl_mask = read_u32(f);
+	lvl = (lvl_mask >> 16) & 15;
+	interrupt_mask = (lvl_mask >> 20) & 7;
+	addressing_mask = (lvl_mask & 0x80000000) ? 0xffffffff : 0x00ffffff;
+	sr_undefined_mask = lvl_mask & 0xffff;
+	fpu_model = read_u32(f);
+	test_low_memory_start = read_u32(f);
+	test_low_memory_end = read_u32(f);
+	test_high_memory_start = read_u32(f);
+	test_high_memory_end = read_u32(f);
+	safe_memory_start = read_u32(f);
+	safe_memory_end = read_u32(f);
+	user_stack_memory = read_u32(f);
+	super_stack_memory = read_u32(f);
 	fread(inst_name, 1, sizeof(inst_name) - 1, f);
 	inst_name[sizeof(inst_name) - 1] = 0;
-
-	opcode_memory = translate_to_native(opcode_memory_addr);
 
 	int lvl2 = cpu_lvl;
 	if (lvl2 == 5 && lvl2 != lvl)
@@ -1932,6 +1934,8 @@ static int test_mnemo(const char *path, const char *opcode)
 		exit(0);
 	}
 
+	opcode_memory = translate_to_native(opcode_memory_addr);
+
 	printf("CPUlvl=%d, Mask=%08x Code=%08x SP=%08x ISP=%08x\n",
 		cpu_lvl, addressing_mask, opcode_memory_addr,
 		user_stack_memory, super_stack_memory);
@@ -1944,6 +1948,21 @@ static int test_mnemo(const char *path, const char *opcode)
 	printf("%s:\n", inst_name);
 
 	testcnt = 0;
+
+	s_cpu_context->low_memory.buffer = low_memory;
+	s_cpu_context->low_memory.start = test_low_memory_start;
+	s_cpu_context->low_memory.end = test_low_memory_end;
+	s_cpu_context->low_memory.size = test_low_memory_end - test_low_memory_start;
+
+	s_cpu_context->high_memory.buffer = high_memory;
+	s_cpu_context->high_memory.start = test_high_memory_start;
+	s_cpu_context->high_memory.end = test_high_memory_end;
+	s_cpu_context->high_memory.size = test_high_memory_end - test_high_memory_start;
+
+	s_cpu_context->test_memory.buffer = test_memory;
+	s_cpu_context->test_memory.start = test_memory_addr;
+	s_cpu_context->test_memory.end = test_memory_end;
+	s_cpu_context->test_memory.size = test_memory_end - test_memory_addr;
 
 	for (;;) {
 		printf("%s. %u...\n", tfname, testcnt);
@@ -2003,6 +2022,7 @@ static int test_mnemo(const char *path, const char *opcode)
 	return errors || quit;
 }
 
+/*
 static int getparamval(const char *p)
 {
 	if (strlen(p) > 2 && p[0] == '0' && toupper(p[1]) == 'X') {
@@ -2012,138 +2032,80 @@ static int getparamval(const char *p)
 		return atol(p);
 	}
 }
+*/
 
-static char path[256];
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int isdir(const char *dirpath, const char *name)
 {
 	struct stat buf;
-	char path[FILENAME_MAX];
+	char path[2048];
 
-	snprintf(path, sizeof(path), "%s%s", dirpath, name);
+	join_path(path, dirpath, name, sizeof(path));
+
 	return stat(path, &buf) == 0 && S_ISDIR(buf.st_mode);
 }
 
-int main(int argc, char *argv[])
-{
-	char opcode[16];
-	int stop_on_error = 1;
+// Init the tester
+M68KTesterInitResult M68KTester_init(const char* base_path, const M68KTesterRunSettings* settings) {
+	M68KTesterInitResult result;
 
-	atexit(freestuff);
+	char cpu_string_name[64];
+	char path[2048] = { 0 };
 
-#ifndef M68K
+	// TODO: Use correct arch here
+	cs_err err = cs_open(CS_ARCH_M68K, (cs_mode)(CS_MODE_BIG_ENDIAN | CS_MODE_M68K_000), &s_cs_handle);
 
-	char *params[] = { "", "LSL.W", "", NULL };
-	argv = params;
-	argc = 3;
+	if (err) {
+		printf("Failed on cs_open() with error returned: %u\n", err);
+		abort();
+	}
 
-	strcpy(path, "data/");
 
 	vbr_zero = calloc(1, 1024);
-
-	cpu_lvl = 0;
-
-#define _stricmp strcasecmp
-
-#else
-
-#define _stricmp strcasecmp
-
-	strcpy(path, "data/");
-
-	low_memory = (uae_u8 *)0;
-	high_memory = (uae_u8 *)0xffff8000;
-
-	cpu_lvl = get_cpu_model();
-
-	if (cpu_lvl == 5) {
-		// Overwrite MOVEC to/from MSP
-		// with NOPs if 68060
-		extern void *msp_address1;
-		extern void *msp_address2;
-		extern void *msp_address3;
-		extern void *msp_address4;
-		*((uae_u32*)&msp_address1) = 0x4e714e71;
-		*((uae_u32*)&msp_address2) = 0x4e714e71;
-		*((uae_u32*)&msp_address3) = 0x4e714e71;
-		*((uae_u32*)&msp_address4) = 0x4e714e71;
-	}
-
-#endif
-
-	if (argc < 2) {
-		printf("cputest <all/mnemonic> (<start mnemonic>) (continue)\n");
-		printf("mnemonic = test single mnemonic\n");
-		printf("all = test all\n");
-		printf("all <mnemonic> = test all, starting from <mnemonic>\n");
-		printf("continue = don't stop on error (all mode only)\n");
-		printf("ccrmask = ignore CCR bits that are not set.\n");
-		return 0;
-	}
-
-	if (strlen(argv[1]) >= sizeof(opcode) - 1)
-		return 0;
-
-	strcpy(opcode, argv[1]);
-
-	check_undefined_sr = 1;
-	ccr_mask = 0xff;
-	for (int i = 1; i < argc; i++) {
-		char *s = argv[i];
-		char *next = i + 1 < argc ? argv[i + 1] : NULL;
-		if (!_stricmp(s, "continue")) {
-			stop_on_error = 0;
-		} else if (!_stricmp(s, "noundefined")) {
-			check_undefined_sr = 0;
-		} else if (!_stricmp(s, "ccrmask")) {
-			ccr_mask = 0;
-			if (next) {
-				ccr_mask = ~getparamval(next);
-				i++;
-			}
-		} else if (!_stricmp(s, "silent")) {
-			dooutput = 0;
-		} else if (!_stricmp(s, "68000")) {
-			cpu_lvl = 0;
-		} else if (!_stricmp(s, "68010")) {
-			cpu_lvl = 1;
-		} else if (!_stricmp(s, "68020")) {
-			cpu_lvl = 2;
-		} else if (!_stricmp(s, "68030")) {
-			cpu_lvl = 3;
-		} else if (!_stricmp(s, "68040")) {
-			cpu_lvl = 4;
-		} else if (!_stricmp(s, "68060")) {
-			cpu_lvl = 5;
-		}
-	}
-
-	sprintf(path + strlen(path), "%u/", 68000 + (cpu_lvl == 5 ? 6 : cpu_lvl) * 10);
+	cpu_lvl = settings->cpu_level == 6 ? 5 : settings->cpu_level;
+	snprintf(cpu_string_name, sizeof(cpu_string_name), "%u/", 68000 + (cpu_lvl == 5 ? 6 : cpu_lvl) * 10);
+	join_path(path, base_path, cpu_string_name, sizeof(path));
 
 	low_memory_size = -1;
 	low_memory_temp = load_file(path, "lmem.dat", NULL, &low_memory_size, 0);
 	high_memory_size = -1;
 	high_memory_temp = load_file(path, "hmem.dat", NULL, &high_memory_size, 0);
 
-#ifndef M68K
 	if (low_memory_size > 0)
 		low_memory = calloc(1, low_memory_size);
 	if (high_memory_size > 0)
 		high_memory = calloc(1, high_memory_size);
-#endif
 
 	if (low_memory_size > 0)
 		low_memory_back = calloc(1, low_memory_size);
 	if (high_memory_size > 0)
 		high_memory_back = calloc(1, high_memory_size);
 
-	if (!_stricmp(opcode, "all")) {
-		DIR *d = opendir(path);
+	M68KTesterContext* context = calloc(1, sizeof(M68KTesterContext));
+	context->opcode = settings->opcode;
+	strncpy(context->cpu_path, path, 2048);
+
+	result.context = context;
+	result.error = NULL;
+
+	return result;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int M68KTester_run_tests(M68KTesterContext* context, void* user_data, M68KTesterCallback callback) {
+	s_cpu_callback = callback;
+	s_cpu_user_data = user_data;
+	s_cpu_context = context;
+
+	if (!strcmp(context->opcode, "all")) {
+		DIR *d = opendir(context->cpu_path);
 		if (!d) {
-			printf("Couldn't list directory '%s'\n", path);
+			printf("Couldn't list directory '%s'\n", context->cpu_path);
 			return 0;
 		}
-#define MAX_FILE_LEN 128
+#define MAX_FILE_LEN 1024
 #define MAX_MNEMOS 256
 		char *dirs = calloc(MAX_MNEMOS, MAX_FILE_LEN);
 		int diroff = 0;
@@ -2154,7 +2116,7 @@ int main(int argc, char *argv[])
 			struct dirent *dr = readdir(d);
 			if (!dr)
 				break;
-			int d = isdir(path, dr->d_name);
+			int d = isdir(context->cpu_path, dr->d_name);
 			if (d && dr->d_name[0] != '.') {
 				strcpy(dirs + diroff, dr->d_name);
 				diroff += MAX_FILE_LEN;
@@ -2168,7 +2130,7 @@ int main(int argc, char *argv[])
 
 		for (int i = 0; i < diroff; i += MAX_FILE_LEN) {
 			for (int j = i + MAX_FILE_LEN; j < diroff; j += MAX_FILE_LEN) {
-				if (_stricmp(dirs + i, dirs + j) > 0) {
+				if (strcmp(dirs + i, dirs + j) > 0) {
 					char tmp[MAX_FILE_LEN];
 					strcpy(tmp, dirs + j);
 					strcpy(dirs + j, dirs + i);
@@ -2177,23 +2139,9 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		int first = 0;
-		if (argc >= 3) {
-			first = -1;
-			for (int i = 0; i < diroff; i += MAX_FILE_LEN) {
-				if (!_stricmp(dirs + i, argv[2])) {
-					first = i;
-					break;
-				}
-			}
-			if (first < 0) {
-				printf("Couldn't find '%s'\n", argv[2]);
-				return 0;
-			}
-		}
-		for (int i = first; i < diroff; i += MAX_FILE_LEN) {
-			if (test_mnemo(path, dirs + i)) {
-				if (stop_on_error)
+		for (int i = 0; i < diroff; i += MAX_FILE_LEN) {
+			if (test_mnemo(context->cpu_path, dirs + i)) {
+				if (context->stop_on_error)
 					break;
 			}
 		}
@@ -2201,7 +2149,7 @@ int main(int argc, char *argv[])
 		free(dirs);
 
 	} else {
-		test_mnemo(path, opcode);
+		test_mnemo(context->cpu_path, context->opcode);
 	}
 
 	return 0;
