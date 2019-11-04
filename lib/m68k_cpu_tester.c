@@ -19,7 +19,7 @@
 
 #define DONTSTOPONERROR 0
 
-#include "m68k_cputester.h"
+#include "m68k_cpu_tester.h"
 #include "cputest_defines.h"
 #include "capstone/include/capstone/capstone.h"
 

@@ -5,6 +5,6 @@ cc_binary(
 	srcs = ["example.c"],
     deps = [
         "//capstone:capstone",
-        "//src:m68k_cpu_tester",
+        "//lib:m68k_cpu_tester",
     ],
 )
