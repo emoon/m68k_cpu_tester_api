@@ -3,26 +3,24 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void run_68k(void* user_data, const M68KTesterContext* context, const M68KTesterRegisters* regs) {
-
-}
+void run_68k(void* user_data, const M68KTesterContext* context, const M68KTesterRegisters* regs) {}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main() {
-	M68KTesterInitResult res;
+    M68KTesterInitResult res;
 
-	M68KTesterRunSettings settings = { 0 };
-	settings.opcode = "LSL.W"; // notice this is case dependent
-	settings.cpu_level = 0; // 68000
+    M68KTesterRunSettings settings = {0};
+    settings.opcode = "LSL.W";  // notice this is case dependent
+    settings.cpu_level = 0;     // 68000
 
-	// Init the tester
-	res = M68KTester_init("data", &settings);
+    // Init the tester
+    res = M68KTester_init("data", &settings);
 
-	if (res.error) {
-		printf("failed to run: %s\n", res.error);
-		return 0;
-	}
+    if (res.error) {
+        printf("failed to run: %s\n", res.error);
+        return 0;
+    }
 
-	return M68KTester_run_tests(res.context, NULL, run_68k);
+    return M68KTester_run_tests(res.context, NULL, run_68k);
 }
