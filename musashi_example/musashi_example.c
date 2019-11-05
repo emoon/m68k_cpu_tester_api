@@ -87,8 +87,9 @@ unsigned int m68k_read_memory_16(unsigned int address) {
 }
 
 unsigned int m68k_read_memory_32(unsigned int address) {
-	uint8_t* v = translate_to_native(address);
-	return READ_LONG(v, 0);
+	unsigned int v0 = m68k_read_memory_16((address + 0) & 0x00ffffff);
+	unsigned int v1 = m68k_read_memory_16((address + 2) & 0x00ffffff);
+	return (v0 << 16)  | v1;
 }
 
 void m68k_write_memory_8(unsigned int address, unsigned int v) {
@@ -102,8 +103,9 @@ void m68k_write_memory_16(unsigned int address, unsigned int v) {
 }
 
 void m68k_write_memory_32(unsigned int address, unsigned int v) {
-	uint8_t* d = translate_to_native(address);
-	WRITE_LONG(d, 0, v);
+	// TODO: Fix hard-coding for 68000
+	m68k_write_memory_16((address + 0) & 0x00ffffff, v >> 16);
+	m68k_write_memory_16((address + 2) & 0x00ffffff, v & 0xffff);
 }
 
 unsigned int m68k_read_disassembler_16(unsigned address) {
