@@ -1636,7 +1636,7 @@ static void process_test(uae_u8* p) {
                         }
                         */
 
-                        s_cpu_callback(s_cpu_user_data, s_cpu_context, (const M68KTesterRegisters*)&test_regs);
+                        s_cpu_callback(s_cpu_user_data, s_cpu_context, (M68KTesterRegisters*)&test_regs);
 
                         if (ccr_mask == 0 && ccr == 0) ignore_sr = 1;
 

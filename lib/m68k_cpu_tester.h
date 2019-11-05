@@ -59,7 +59,7 @@ typedef struct M68KTesterContext {
 // This is called for each test. user_data is pointer provided in M68KTester_run_tests which is passed down to the test
 // context holds memory ranges needed for the callback to handle to read the memory correctly and registes holds the
 // current state
-typedef void (*M68KTesterCallback)(void* user_data, const M68KTesterContext* context, const M68KTesterRegisters* regs);
+typedef void (*M68KTesterCallback)(void* user_data, const M68KTesterContext* context, M68KTesterRegisters* regs);
 
 // Settings for the runner
 typedef struct M68KTesterRunSettings {

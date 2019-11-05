@@ -3,7 +3,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void run_68k(void* user_data, const M68KTesterContext* context, const M68KTesterRegisters* regs) {}
+void run_68k(void* user_data, const M68KTesterContext* context, M68KTesterRegisters* regs) {}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -11,7 +11,7 @@ int main() {
     M68KTesterInitResult res;
 
     M68KTesterRunSettings settings = {0};
-    settings.opcode = "LSL.W";  // notice this is case dependent
+    settings.opcode = "MOVE.W";  // notice this is case dependent
     settings.cpu_level = 0;     // 68000
 
     // Init the tester
