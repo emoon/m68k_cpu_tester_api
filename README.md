@@ -14,7 +14,7 @@ Usage:
 1. Build the Musashi example using this command: `bazel build //musashi_example:musashi_example`
 2. Unpack the tester exe `7z x cputester.7z -ocputester`
    * `cd cputester`
-   * cputester.exe (on Linux `wine` cputester.exe works fine also)
+   * `cputester` (on Linux `wine cputester.exe` works fine also)
    * `move/mv data ..`
    * `cd ..`
 3. Run `bazel-bin/musashi_example/musashi_example`
