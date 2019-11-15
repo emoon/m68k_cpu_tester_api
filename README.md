@@ -4,12 +4,12 @@ This repo makes an API around the cpu tester from WinUAE that can be found [here
 
 Usage:
 
-# Dependencies
+## Dependencies
 
 1. To compile the code you need [Bazel](https://bazel.build) but the rules are simple so moving the code to any other build system should be straightforward.
 2. In order to run the code you need to generate the tests by an unpacking this [file](https://github.com/emoon/m68k_cpu_tester_api/blob/master/cputester.7z)
 
-# Testing the Musashi example
+## Testing the Musashi example
 
 1. Build the Musashi example using this command: `bazel build //musashi_example:musashi_example`
 2. Unpack the tester exe `7z x cputester.7z -ocputester`
@@ -19,7 +19,7 @@ Usage:
    * `cd ..`
 3. Run `bazel-bin/musashi_example/musashi_example`
 
-# Known issues
+## Known issues
 
 Currently the test will break when trying to execute the `JMP` instruction,
 
