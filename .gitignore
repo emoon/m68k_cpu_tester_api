@@ -10,3 +10,5 @@ bazel-bazel-example
 Vagrantfile
 .idea/
 data/
+cputester/
+cpu_tester/
