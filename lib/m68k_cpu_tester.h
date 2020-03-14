@@ -4,6 +4,7 @@
 #include "cputest_defines.h"
 
 #define M68K_INST_NAME_SIZE 16
+#define M68K_CPU_TESTER
 
 // 80-bit register type
 typedef struct M68KTesterFpuReg {
@@ -23,7 +24,12 @@ typedef struct M68KTesterRegisters {
     uint32_t excframe;
     M68KTesterFpuReg fpuregs[8];
     uint32_t fpiar, fpcr, fpsr;
-    uint32_t srcaddr, dstaddr;
+    uint32_t tracecnt;
+    uint32_t tracedata[6];
+    uint32_t cycles, cycles2, cyclest;
+    uint32_t srcaddr, dstaddr, branchtarget;
+    uint32_t endpc;
+    uint8_t branchtarget_mode;
 } M68KTesterRegisters;
 
 // The tester will load data into different memory ranges so it's up to the implementor to make sure
