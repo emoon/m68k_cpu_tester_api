@@ -2703,12 +2703,14 @@ end:
     }
 }
 
+#ifndef M68K_CPU_TESTER
 static void freestuff(void) {
     if (test_memory && test_memory_addr) free_absolute(test_memory_addr, test_memory_size);
 #ifdef WAITEXIT
     getchar();
 #endif
 }
+#endif
 
 static uae_u32 read_u32(uae_u8* headerfile, int* poffset) {
     uae_u8 data[4] = {0};
@@ -2719,9 +2721,8 @@ static uae_u32 read_u32(uae_u8* headerfile, int* poffset) {
 
 static int test_mnemo(const char* in_path, const char* opcode) {
     int size;
-    uae_u8 data[4] = {0};
     uae_u32 v;
-    char fname[256], tfname[256];
+    char tfname[256];
     int filecnt = 1;
     uae_u32 starttimeid;
     int lvl;
@@ -2731,7 +2732,7 @@ static int test_mnemo(const char* in_path, const char* opcode) {
 
     sprintf(tfname, "%s%s/0000.dat", in_path, opcode);
     size = -1;
-    uae_u8* headerfile = load_file(path, tfname, NULL, &size, 1, 1);
+    uae_u8* headerfile = load_file(in_path, tfname, NULL, &size, 1, 1);
     if (!headerfile) {
         exit(0);
     }
@@ -2924,6 +2925,7 @@ static int test_mnemo(const char* in_path, const char* opcode) {
     return errors || quit;
 }
 
+#ifndef M68K_CPU_TESTER
 static int getparamval(const char* p) {
     if (strlen(p) > 2 && p[0] == '0' && toupper(p[1]) == 'X') {
         char* endptr;
@@ -2932,6 +2934,7 @@ static int getparamval(const char* p) {
         return atol(p);
     }
 }
+#endif
 
 static int isdir(const char* dirpath, const char* name) {
     struct stat buf;
@@ -2961,9 +2964,10 @@ M68KTesterInitResult M68KTester_init(const char* base_path, const M68KTesterRunS
     join_path(path, base_path, cpu_string_name, sizeof(path));
 
     low_memory_size = -1;
-    low_memory_temp = load_file(path, "lmem.dat", NULL, &low_memory_size, 0);
+
+	low_memory_temp = load_file(path, "lmem.dat", NULL, &low_memory_size, 0, 1);
     high_memory_size = -1;
-    high_memory_temp = load_file(path, "hmem.dat", NULL, &high_memory_size, 0);
+    high_memory_temp = load_file(path, "hmem.dat", NULL, &high_memory_size, 0, 1);
 
     if (low_memory_size > 0) low_memory = calloc(1, low_memory_size);
     if (high_memory_size > 0) high_memory = calloc(1, high_memory_size);
