@@ -18,9 +18,11 @@
 #ifndef __i386__
 #define __i386__
 #endif
+#ifdef _WIN32
 #define WINDOWS
 #define ZLIB_WINAPI
 #define PACKAGE_STRING "WinUAE"
+#endif
 
 #ifndef UAE_MINI
 

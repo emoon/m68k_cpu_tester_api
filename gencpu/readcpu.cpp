@@ -19,6 +19,8 @@ int nr_cpuop_funcs;
 #define _tcsncmp strncmp
 #define _tcscmp strcmp
 #define strnicmp strncasecmp
+#define _istspace isspace
+#define _tcslen strlen
 #endif
 
 struct mnemolookup lookuptab[] = {
@@ -180,7 +182,7 @@ static amodes mode_from_str (const TCHAR *str)
 	if (_tcsncmp (str, _T("PC8r"), 4) == 0) return PC8r;
 	if (_tcsncmp (str, _T("Immd"), 4) == 0) return imm;
 	abort ();
-	return 0;
+	return Dreg;
 }
 
 STATIC_INLINE amodes mode_from_mr (int mode, int reg)
@@ -206,7 +208,7 @@ STATIC_INLINE amodes mode_from_mr (int mode, int reg)
 		}
 	}
 	abort ();
-	return 0;
+	return Dreg;
 }
 
 static void build_insn (int insn)
@@ -890,7 +892,7 @@ int get_no_mismatches (void)
 	return imismatch;
 }
 
-static int isreg(amodes mode)
+static int isreg(int mode)
 {
 	if (mode == Dreg || mode == Areg)
 		return 1;
