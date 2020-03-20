@@ -1,13 +1,9 @@
 
 #include "sysconfig.h"
 #include "sysdeps.h"
+#include "string_wrappers.h"
 
 #include "ini.h"
-
-#ifndef _WIN32
-#include <string.h>
-#define _tcsicmp strcasecmp
-#endif
 
 static TCHAR *initrim(TCHAR *s)
 {

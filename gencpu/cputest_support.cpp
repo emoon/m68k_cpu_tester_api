@@ -9,6 +9,18 @@
 #include "mmu_common.h"
 #include "cpummu030.h"
 
+#ifndef _WIN32
+#define stricmp strncasecmp
+#define _tcsncmp strncmp
+#define _tcscmp strcmp
+#define strnicmp strncasecmp
+#define _istspace isspace
+#define _tcslen strlen
+#define _tcscspn strcspn
+#define _vsntprintf vsnprintf
+#define wprintf printf
+#endif
+
 cpuop_func *loop_mode_table[65536];
 
 void my_trim(TCHAR *s)

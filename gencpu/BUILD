@@ -78,6 +78,7 @@ cc_binary(
     srcs = [
         "machdep/rpt.h",
         "machdep/m68k.h",
+        "machdep/maccess.h",
         "include/ini.h",
         "include/cpu_prefetch.h",
         "include/cpummu.h",
@@ -101,6 +102,7 @@ cc_binary(
         "include/uae/time.h",
         "include/uae/types.h",
         "include/uae/vm.h",
+        "include/memory.h",
         "cputest/cputest_defines.h",
         "softfloat/softfloat.h",
         "softfloat/softfloat-macros.h",
@@ -108,6 +110,7 @@ cc_binary(
         "softfloat/softfloat_fpsp_tables.h",
         "sysconfig.h",
         "target.h",
+        "string_wrappers.h",
         ":cpudefs.cpp",
         ":cpuemu_90_test.cpp",
         ":cpuemu_91_test.cpp",

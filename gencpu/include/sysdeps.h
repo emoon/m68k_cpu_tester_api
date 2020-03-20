@@ -192,19 +192,21 @@ typedef uae_u32 uaecptr;
 #undef uae_s64
 #undef uae_u64
 
+#include <stdint.h>
+
 #if SIZEOF_LONG_LONG == 8
-#define uae_s64 long long
-#define uae_u64 unsigned long long
+#define uae_s64 int64_t
+#define uae_u64 uint64_t
 #define VAL64(a) (a ## LL)
 #define UVAL64(a) (a ## uLL)
 #elif SIZEOF___INT64 == 8
-#define uae_s64 __int64
-#define uae_u64 unsigned __int64
+#define uae_s64 int64_t
+#define uae_u64 uint64_t
 #define VAL64(a) (a)
 #define UVAL64(a) (a)
 #elif SIZEOF_LONG == 8
-#define uae_s64 long;
-#define uae_u64 unsigned long;
+#define uae_s64 int64_t
+#define uae_u64 uint64_t
 #define VAL64(a) (a ## l)
 #define UVAL64(a) (a ## ul)
 #endif
@@ -216,7 +218,8 @@ uae_atomic atomic_dec(volatile uae_atomic *p);
 uae_u32 atomic_bit_test_and_reset(volatile uae_atomic *p, uae_u32 v);
 
 #ifdef HAVE_STRDUP
-#define my_strdup _tcsdup
+//#define my_strdup _tcsdup
+#define my_strdup strdup
 #else
 extern TCHAR *my_strdup (const TCHAR*s);
 #endif

@@ -5,6 +5,7 @@
 #include "disasm.h"
 #include "ini.h"
 #include "fpp.h"
+#include "string_wrappers.h"
 
 #include "zlib.h"
 
@@ -1648,7 +1649,7 @@ static uae_u8 *store_mem_writes(uae_u8 *dst, int storealways)
 		if (is_nowrite_address(addr, 1)) {
 			wprintf(_T("attempting to save safe memory address %08x!\n"), addr);
 			abort();
-		}	
+		}
 		if (addr < 0x8000) {
 			*dst++ = CT_MEMWRITE | CT_ABSOLUTE_WORD;
 			*dst++ = (addr >> 8) & 0xff;
@@ -2774,7 +2775,7 @@ static int handle_rte(uae_u16 opcode, uaecptr pc, struct instr *dp, int *isconst
 			imm_special += 4;
 			continue;
 		}
-		break;	
+		break;
 	}
 	v = imm_special >> 6;
 	uae_u16 sr = v & 31;
@@ -2867,7 +2868,7 @@ static void execute_ins(uaecptr endpc, uaecptr targetpc, struct instr *dp)
 	uae_u16 opc = regs.ir;
 	uae_u16 opw1 = (opcode_memory[2] << 8) | (opcode_memory[3] << 0);
 	uae_u16 opw2 = (opcode_memory[4] << 8) | (opcode_memory[5] << 0);
-	if (opc == 0x199c 
+	if (opc == 0x199c
 		&& opw1 == 0x2808
 		//&& opw2 == 0x4afc
 		)
@@ -3621,7 +3622,7 @@ static void test_mnemo(const TCHAR *path, const TCHAR *mnemo, const TCHAR *ovrfi
 					uae_u32 branch_target_data_original = 0x4afc4e71;
 					uae_u32 branch_target_data = branch_target_data_original;
 
-					out_of_test_space = 0; 
+					out_of_test_space = 0;
 					noaccesshistory = 0;
 					hardware_bus_error_fake = 0;
 					hardware_bus_error = 0;
@@ -3868,7 +3869,7 @@ static void test_mnemo(const TCHAR *path, const TCHAR *mnemo, const TCHAR *ovrfi
 						my_trim(out);
 						wprintf(_T("%08u %s"), subtest_count, out);
 					}
-					
+
 					// disassembler may set this
 					out_of_test_space = false;
 
@@ -3938,7 +3939,7 @@ static void test_mnemo(const TCHAR *path, const TCHAR *mnemo, const TCHAR *ovrfi
 							}
 							memcpy(opcode_memory, oldcodebytes, sizeof(oldcodebytes));
 							continue;
-						}				
+						}
 						testing_active = 1;
 						if (!valid_address(srcaddr, 2, 1) || srcaddr + 2 == opcode_memory_start) {
 							if (verbose) {
@@ -4098,7 +4099,7 @@ static void test_mnemo(const TCHAR *path, const TCHAR *mnemo, const TCHAR *ovrfi
 								endopcodesize = 2;
 							}
 							noaccesshistory--;
-							
+
 							// swap branch target illegal/nop
 							noaccesshistory++;
 							if (branch_target_swap_mode) {
@@ -4243,7 +4244,7 @@ static void test_mnemo(const TCHAR *path, const TCHAR *mnemo, const TCHAR *ovrfi
 								}
 								if (safe_memory_mode) {
 									skipped = 1;
-								}					
+								}
 							}
 
 							if (feature_usp == 2) {
@@ -4721,6 +4722,7 @@ static void test_mnemo_text(const TCHAR *path, const TCHAR *mode)
 	}
 }
 
+/*
 static void my_trim(TCHAR *s)
 {
 	int len;
@@ -4730,6 +4732,7 @@ static void my_trim(TCHAR *s)
 	while (len > 0 && _tcscspn(s + len - 1, _T("\t \r\n")) == 0)
 		s[--len] = '\0';
 }
+*/
 
 static int check_safe_memory(uae_u32 start, uae_u32 end)
 {
@@ -5468,6 +5471,9 @@ static int test(struct ini_data *ini, const TCHAR *sections, const TCHAR *testna
 
 static TCHAR sections[1000];
 
+#ifndef _WIN32
+#define __cdecl
+#endif
 int __cdecl main(int argc, char *argv[])
 {
 	struct ini_data *ini = ini_load(_T("cputestgen.ini"), false);

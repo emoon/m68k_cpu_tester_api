@@ -17,6 +17,7 @@
 
 #include "sysconfig.h"
 #include "sysdeps.h"
+#include "string_wrappers.h"
 
 #include "options.h"
 #include "memory.h"
@@ -57,7 +58,7 @@ static void fp_set_mode(uae_u32 mode_control)
 			set_floatx80_rounding_precision(80, &fs);
 			break;
 	}
-	
+
 	switch(mode_control & FPCR_ROUNDING_MODE) {
 		case FPCR_ROUND_NEAR: // to neareset
 			set_float_rounding_mode(float_round_nearest_even, &fs);
@@ -115,7 +116,7 @@ static const TCHAR *fp_printx80(floatx80 *fx, int mode)
 	n = floatx80_is_negative(*fx);
 	u = floatx80_is_unnormal(*fx);
 	d = floatx80_is_denormal(*fx);
-	
+
 	if (floatx80_is_infinity(*fx)) {
 		_stprintf(fsout, _T("%c%s"), n ? '-' : '+', _T("inf"));
 	} else if (floatx80_is_signaling_nan(*fx)) {
@@ -519,9 +520,9 @@ static void to_native(fptype *fp, fpdata *fpd)
 {
 	int expon;
 	fptype frac;
-	
+
 	expon = fpd->fpx.high & 0x7fff;
-	
+
 	fp_is_init(fpd);
 	if (fp_is_zero(fpd)) {
 		*fp = fp_is_neg(fpd) ? -0.0 : +0.0;
@@ -544,7 +545,7 @@ static void to_native(fptype *fp, fpdata *fpd)
 #endif
 		return;
 	}
-	
+
 	frac = (fptype)fpd->fpx.low / (fptype)(twoto32 * 2147483648.0);
 	if (fp_is_neg(fpd))
 		frac = -frac;
@@ -559,12 +560,12 @@ static void from_native(fptype fp, fpdata *fpd)
 {
 	int expon;
 	fptype frac;
-	
+
 	if (signbit(fp))
 		fpd->fpx.high = 0x8000;
 	else
 		fpd->fpx.high = 0x0000;
-	
+
 	if (isnan(fp)) {
 		fpd->fpx.high |= 0x7fff;
 		fpd->fpx.low = LIT64(0xffffffffffffffff);
@@ -581,7 +582,7 @@ static void from_native(fptype fp, fpdata *fpd)
 	}
 	if (fp < 0.0)
 		fp = -fp;
-	
+
 #ifdef USE_LONG_DOUBLE
 	 frac = frexpl (fp, &expon);
 #else
@@ -594,7 +595,7 @@ static void from_native(fptype fp, fpdata *fpd)
 	}
 	fpd->fpx.high |= (expon + 16383 - 1) & 0x7fff;
 	fpd->fpx.low = (uint64_t)(frac * (fptype)(twoto32 * twoto32));
-	
+
 	while (!(fpd->fpx.low & LIT64( 0x8000000000000000))) {
 		if (fpd->fpx.high == 0) {
 			break;
@@ -637,23 +638,23 @@ static void fp_to_pack(fpdata *fp, uae_u32 *wrd, int dummy)
 	pack_se = (wrd[0] >> 30) & 1;                   // sign of packed exponent
 	pack_sm = (wrd[0] >> 31) & 1;                   // sign of packed significand
 	exp = 0;
-	
+
 	for (i = 0; i < 3; i++) {
 		exp *= 10;
 		exp += (pack_exp >> (8 - i * 4)) & 0xF;
 	}
-	
+
 	if (pack_se) {
 		exp = -exp;
 	}
 
 	exp -= 16;
-	
+
 	if (exp < 0) {
 		exp = -exp;
 		pack_se = 1;
 	}
-	
+
 	mant = pack_int;
 
 	for (i = 0; i < 16; i++) {
@@ -665,7 +666,7 @@ static void fp_to_pack(fpdata *fp, uae_u32 *wrd, int dummy)
 	f.high |= pack_se ? 0x4000 : 0;
 	f.high |= pack_sm ? 0x8000 : 0;
 	f.low = mant;
-	
+
 	fp->fpx = floatdecimal_to_floatx80(f, &fs);
 }
 
@@ -673,16 +674,16 @@ static void fp_to_pack(fpdata *fp, uae_u32 *wrd, int dummy)
 static void fp_from_pack(fpdata *fp, uae_u32 *wrd, int kfactor)
 {
 	floatx80 f = floatx80_to_floatdecimal(fp->fpx, &kfactor, &fs);
-	
+
 	uae_u32 pack_exp, pack_exp4, pack_int, pack_se, pack_sm;
-	uae_u64 pack_frac;    
+	uae_u64 pack_frac;
 
 	uae_u32 exponent;
 	uae_u64 significand;
 
 	uae_s32 len;
 	uae_u64 digit;
- 
+
 	if ((f.high & 0x7FFF) == 0x7FFF) {
 		wrd[0] = (uae_u32)(f.high << 16);
 		wrd[1] = f.low >> 32;
@@ -690,7 +691,7 @@ static void fp_from_pack(fpdata *fp, uae_u32 *wrd, int kfactor)
 	} else {
 		exponent = f.high & 0x3FFF;
 		significand = f.low;
-		
+
 		pack_int = 0;
 		pack_frac = 0;
 		len = kfactor; // SoftFloat saved len to kfactor variable
@@ -718,16 +719,16 @@ static void fp_from_pack(fpdata *fp, uae_u32 *wrd, int kfactor)
 				pack_exp |= digit << (12 - len * 4);
 			}
 		}
-		
+
 		pack_se = f.high & 0x4000;
 		pack_sm = f.high & 0x8000;
-		
+
 		wrd[0] = pack_exp << 16;
 		wrd[0] |= pack_exp4 << 12;
 		wrd[0] |= pack_int;
 		wrd[0] |= pack_se ? 0x40000000 : 0;
 		wrd[0] |= pack_sm ? 0x80000000 : 0;
-		
+
 		wrd[1] = pack_frac >> 32;
 		wrd[2] = pack_frac & 0xffffffff;
 	}

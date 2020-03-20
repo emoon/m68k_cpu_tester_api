@@ -326,9 +326,11 @@ typedef long uae_atomic;
 #define SIZEOF_FLOAT 4
 #define SIZEOF_DOUBLE 8
 
+#ifdef _WIN32
 #define HAVE_ISNAN
 #undef HAVE_ISINF
 #define isnan _isnan
+#endif
 
 #ifndef LT_MODULE_EXT
 #define LT_MODULE_EXT _T(".dll")
