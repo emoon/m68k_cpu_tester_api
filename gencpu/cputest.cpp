@@ -3348,7 +3348,11 @@ static void test_mnemo(const TCHAR *path, const TCHAR *mnemo, const TCHAR *ovrfi
 		_tcscat(dir, fpsizes[opcodesize < 7 ? opcodesize : 2]);
 	}
 	memset(inst_name, 0, sizeof(inst_name));
+#ifndef _WIN32
+	strncpy(inst_name, dir + pathlen, sizeof(inst_name));
+#else
 	ua_copy(inst_name, sizeof(inst_name), dir + pathlen);
+#endif
 
 	opcodecnt = 0;
 	for (int opcode = 0; opcode < 65536; opcode++) {

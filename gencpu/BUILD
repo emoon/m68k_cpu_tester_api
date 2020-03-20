@@ -103,6 +103,7 @@ cc_binary(
         "include/uae/types.h",
         "include/uae/vm.h",
         "include/memory.h",
+        "include/debugmem.h",
         "cputest/cputest_defines.h",
         "softfloat/softfloat.h",
         "softfloat/softfloat-macros.h",
@@ -122,6 +123,7 @@ cc_binary(
         ":cputbl_test.h",
         "cputest.cpp",
         "cputest_support.cpp",
+        "disasm.cpp",
         "fpp.cpp",
         "fpp_softfloat.cpp",
         "ini.cpp",
@@ -131,5 +133,7 @@ cc_binary(
         "softfloat/softfloat_decimal.cpp",
         "softfloat/softfloat_fpsp.cpp",
     ],
+
+    deps = ["//zlib:zlib"],
 )
 

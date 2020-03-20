@@ -9,6 +9,7 @@
 #ifndef UAE_NEWCPU_H
 #define UAE_NEWCPU_H
 
+#include "sysconfig.h"
 #include "uae/types.h"
 #include "readcpu.h"
 #include "machdep/m68k.h"
@@ -657,7 +658,7 @@ extern void m68k_disasm (uaecptr addr, uaecptr *nextpc, uaecptr lastpc, int cnt)
 extern uae_u32 m68k_disasm_2 (TCHAR *buf, int bufsize, uaecptr addr, uaecptr *nextpc, int cnt, uae_u32 *seaddr, uae_u32 *deaddr, uaecptr lastpc, int safemode);
 extern void sm68k_disasm (TCHAR*, TCHAR*, uaecptr addr, uaecptr *nextpc, uaecptr lastpc);
 extern int m68k_asm(TCHAR *buf, uae_u16 *out, uaecptr pc);
-extern uaecptr ShowEA(void *f, uaecptr pc, uae_u16 opcode, int reg, amodes mode, wordsizes size, TCHAR *buf, uae_u32 *eaddr, int *actualea, int safemode);
+extern uaecptr ShowEA(void *f, uaecptr pc, uae_u16 opcode, int reg, int mode, int size, TCHAR *buf, uae_u32 *eaddr, int *actualea, int safemode);
 extern int get_cpu_model (void);
 
 extern void set_cpu_caches (bool flush);

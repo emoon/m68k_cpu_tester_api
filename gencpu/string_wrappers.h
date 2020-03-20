@@ -27,5 +27,9 @@
 #define _wmkdir(name) mkdir(name, 0700)
 #define _totlower tolower
 #define _tcsnicmp stricmp
+#define _tcstoul strtoul
+#define _tcsstr strstr
+#define _tcsncpy strncpy
+char* strupr(char*);
 #endif
 
