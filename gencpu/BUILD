@@ -62,8 +62,7 @@ cc_binary(
     name = "cputester",
     includes = [".", "include"],
     copts = [
-        "-Wno-all",
-        "-fno-permissive",
+    	"-O2", "-g",
         "-Wno-sign-compare",
     ],
     defines = [
