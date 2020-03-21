@@ -6,6 +6,7 @@ bazel-out
 bazel-testlogs
 bazel-vagrant
 bazel-bazel-example
+bazel-m68k_cpu_tester_api
 .vagrant/
 Vagrantfile
 .idea/
