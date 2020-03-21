@@ -126,8 +126,8 @@ void run_68k(void* user_data, const M68KTesterContext* context, M68KTesterRegist
 	m68k_set_reg(M68K_REG_PC, regs->pc);
 	m68k_set_reg(M68K_REG_SP, regs->regs[15]);
 	m68k_set_reg(M68K_REG_SR, regs->sr);
-	m68k_set_reg(M68K_REG_MSP, regs->msp);
-	m68k_set_reg(M68K_REG_ISP, regs->ssp);	// not sure if this is correct
+	//m68k_set_reg(M68K_REG_MSP, regs->msp);
+	//m68k_set_reg(M68K_REG_ISP, regs->ssp);	// not sure if this is correct
 
 	do {
 		m68k_execute(4);
@@ -139,8 +139,8 @@ void run_68k(void* user_data, const M68KTesterContext* context, M68KTesterRegist
 
 	regs->pc = m68k_get_reg(0, M68K_REG_PC);
 	regs->sr = m68k_get_reg(0, M68K_REG_SR);
-	regs->msp = m68k_get_reg(0, M68K_REG_MSP);
-	regs->ssp = m68k_get_reg(0, M68K_REG_ISP);
+	//regs->msp = m68k_get_reg(0, M68K_REG_MSP);
+	//regs->ssp = m68k_get_reg(0, M68K_REG_ISP);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,11 +149,12 @@ int main() {
     M68KTesterInitResult res;
 
     M68KTesterRunSettings settings = {0};
-    settings.opcode = "all";  // notice this is case dependent
+    //settings.opcode = "all";  // notice this is case dependent
+    settings.opcode = "ADD.W";  // notice this is case dependent
     settings.cpu_level = 0;     // 68000
 
     // Init the tester
-    res = M68KTester_init("data", &settings);
+    res = M68KTester_init("data/68000_Basic", &settings);
 
     if (res.error) {
         printf("failed to run: %s\n", res.error);

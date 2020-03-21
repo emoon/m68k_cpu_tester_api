@@ -632,7 +632,9 @@ static uae_u8* load_file(const char* path, const char* file, uae_u8* p, int* siz
     int unpackoffset = 0;
     int size = 0;
 
-    sprintf(fname, "%s%s.gz", path, file);
+	// compressed files no supported with m68k cpu tester yet
+#ifndef M68K_CPU_TESTER
+    join_path(fname, path, file, sizeof(fname));
     FILE* f = fopen(fname, "rb");
     if (f) {
         fseek(f, 0, SEEK_END);
@@ -689,8 +691,11 @@ static uae_u8* load_file(const char* path, const char* file, uae_u8* p, int* siz
             *sizep = size;
         }
     }
+#else
+	FILE* f = NULL;
+#endif
     if (!unpack) {
-        sprintf(fname, "%s%s", path, file);
+    	join_path(fname, path, file, sizeof(fname));
         f = fopen(fname, "rb");
         if (!f) {
             if (exiterror) {
@@ -2137,12 +2142,13 @@ static uae_u8* validate_test(uae_u8* p, short ignore_errors, short ignore_sr) {
                 outbp += strlen(outbp);
                 errflag |= 1 << 16;
             }
-            if ((test_regs.expsr & 0xff) != (test_regs.sr & 0xff)) {
-                sprintf(outbp, "Exception stacked CCR != CCR at start of exception handler!\n");
-                outbp += strlen(outbp);
-                errflag |= 1 << 16;
-            }
-
+            if (ccr_mask != 0) {
+				if ((test_regs.expsr & 0xff) != (test_regs.sr & 0xff)) {
+					sprintf(outbp, "Exception stacked CCR != CCR at start of exception handler!\n");
+					outbp += strlen(outbp);
+					errflag |= 1 << 16;
+				}
+			}
         } else if (mode == CT_PC) {
             uae_u32 val = last_registers.pc;
             p = restore_rel(p, &val, 0);
@@ -2703,12 +2709,14 @@ end:
     }
 }
 
+#ifndef M68K_CPU_TESTER
 static void freestuff(void) {
     if (test_memory && test_memory_addr) free_absolute(test_memory_addr, test_memory_size);
 #ifdef WAITEXIT
     getchar();
 #endif
 }
+#endif
 
 static uae_u32 read_u32(uae_u8* headerfile, int* poffset) {
     uae_u8 data[4] = {0};
@@ -2719,9 +2727,8 @@ static uae_u32 read_u32(uae_u8* headerfile, int* poffset) {
 
 static int test_mnemo(const char* in_path, const char* opcode) {
     int size;
-    uae_u8 data[4] = {0};
     uae_u32 v;
-    char fname[256], tfname[256];
+    char tfname[256];
     int filecnt = 1;
     uae_u32 starttimeid;
     int lvl;
@@ -2729,9 +2736,9 @@ static int test_mnemo(const char* in_path, const char* opcode) {
     errors = 0;
     quit = 0;
 
-    sprintf(tfname, "%s%s/0000.dat", in_path, opcode);
+	sprintf(tfname, "%s/0000.dat", opcode);
     size = -1;
-    uae_u8* headerfile = load_file(path, tfname, NULL, &size, 1, 1);
+    uae_u8* headerfile = load_file(in_path, tfname, NULL, &size, 1, 1);
     if (!headerfile) {
         exit(0);
     }
@@ -2829,7 +2836,7 @@ static int test_mnemo(const char* in_path, const char* opcode) {
     }
 
     size = test_memory_size;
-    load_file(path, "tmem.dat", test_memory, &size, 1, 0);
+    load_file(in_path, "tmem.dat", test_memory, &size, 1, 0);
     if (size != test_memory_size) {
         printf("tmem.dat size mismatch\n");
         exit(0);
@@ -2849,13 +2856,30 @@ static int test_mnemo(const char* in_path, const char* opcode) {
     memset(exceptioncount, 0, sizeof(exceptioncount));
     supercnt = 0;
 
+#ifdef M68K_CPU_TESTER
+    s_cpu_context->low_memory.buffer = low_memory;
+    s_cpu_context->low_memory.start = test_low_memory_start;
+    s_cpu_context->low_memory.end = test_low_memory_end;
+    s_cpu_context->low_memory.size = test_low_memory_end - test_low_memory_start;
+
+    s_cpu_context->high_memory.buffer = high_memory;
+    s_cpu_context->high_memory.start = test_high_memory_start;
+    s_cpu_context->high_memory.end = test_high_memory_end;
+    s_cpu_context->high_memory.size = test_high_memory_end - test_high_memory_start;
+
+    s_cpu_context->test_memory.buffer = test_memory;
+    s_cpu_context->test_memory.start = test_memory_addr;
+    s_cpu_context->test_memory.end = test_memory_end;
+    s_cpu_context->test_memory.size = test_memory_end - test_memory_addr;
+#endif
+
     for (;;) {
         printf("%s (%s). %u...\n", tfname, group, testcnt);
 
         sprintf(tfname, "%s/%04d.dat", opcode, filecnt);
 
         test_data_size = -1;
-        test_data = load_file(path, tfname, NULL, &test_data_size, 0, 1);
+        test_data = load_file(in_path, tfname, NULL, &test_data_size, 0, 1);
         if (!test_data) {
             if (askifmissing) {
                 printf("Couldn't open '%s%s'. Type new path and press enter.\n", path, tfname);
@@ -2924,6 +2948,7 @@ static int test_mnemo(const char* in_path, const char* opcode) {
     return errors || quit;
 }
 
+#ifndef M68K_CPU_TESTER
 static int getparamval(const char* p) {
     if (strlen(p) > 2 && p[0] == '0' && toupper(p[1]) == 'X') {
         char* endptr;
@@ -2932,9 +2957,13 @@ static int getparamval(const char* p) {
         return atol(p);
     }
 }
+#endif
 
 static int isdir(const char* dirpath, const char* name) {
     struct stat buf;
+
+    printf("dirpath %s\n", dirpath);
+    printf("name    %s\n", name);
 
     join_path(tmpbuffer, dirpath, name, sizeof(tmpbuffer));
     return stat(tmpbuffer, &buf) == 0 && S_ISDIR(buf.st_mode);
@@ -2957,13 +2986,16 @@ M68KTesterInitResult M68KTester_init(const char* base_path, const M68KTesterRunS
 
     vbr_zero = calloc(1, 1024);
     cpu_lvl = settings->cpu_level == 6 ? 5 : settings->cpu_level;
-    snprintf(cpu_string_name, sizeof(cpu_string_name), "%u/", 68000 + (cpu_lvl == 5 ? 6 : cpu_lvl) * 10);
-    join_path(path, base_path, cpu_string_name, sizeof(path));
+    //snprintf(cpu_string_name, sizeof(cpu_string_name), "%u/", 68000 + (cpu_lvl == 5 ? 6 : cpu_lvl) * 10);
+	//printf("path %s base_path %s cpu_string_name %s\n", path, base_path, cpu_string_name);
+    //join_path(path, base_path, cpu_string_name, sizeof(path));
+    strcpy(path, base_path);
 
     low_memory_size = -1;
-    low_memory_temp = load_file(path, "lmem.dat", NULL, &low_memory_size, 0);
+
+	low_memory_temp = load_file(path, "lmem.dat", NULL, &low_memory_size, 0, 1);
     high_memory_size = -1;
-    high_memory_temp = load_file(path, "hmem.dat", NULL, &high_memory_size, 0);
+    high_memory_temp = load_file(path, "hmem.dat", NULL, &high_memory_size, 0, 1);
 
     if (low_memory_size > 0) low_memory = calloc(1, low_memory_size);
     if (high_memory_size > 0) high_memory = calloc(1, high_memory_size);
@@ -2987,6 +3019,13 @@ int M68KTester_run_tests(M68KTesterContext* context, void* user_data, M68KTester
     s_cpu_callback = callback;
     s_cpu_user_data = user_data;
     s_cpu_context = context;
+
+    check_undefined_sr = 0;
+    ccr_mask = 0;
+    disasm = 1;
+    exitcnt = -1;
+    cyclecounter_addr = 0xffffffff;
+    cycles_range = 2;
 
     if (!strcmp(context->opcode, "all")) {
         DIR* d = opendir(context->cpu_path);

@@ -7,17 +7,13 @@ Usage:
 ## Dependencies
 
 1. To compile the code you need [Bazel](https://bazel.build) but the rules are simple so moving the code to any other build system should be straightforward.
-2. In order to run the code you need to generate the tests by an unpacking this [file](https://github.com/emoon/m68k_cpu_tester_api/blob/master/cputester.7z)
 
 ## Testing the Musashi example
 
-1. Build the Musashi example using this command: `bazel build //musashi_example:musashi_example`
-2. Unpack the tester exe `7z x cputester.7z -ocputester`
-   * `cd cputester`
-   * `cputester` (on Linux `wine cputester.exe` works fine also)
-   * `move/mv data ..`
-   * `cd ..`
-3. Run `bazel-bin/musashi_example/musashi_example`
+1. Build the cputester that will generate the tests: `bazel build //gencpu:cputester`
+2. Run 'bazel-bin/gencpu/cputester' This will generate the tests in the `data` directory.
+3. Build the Musashi example using this command: `bazel build //musashi_example:musashi_example`
+4. Run `bazel-bin/musashi_example/musashi_example`
 
 ## Known issues
 
