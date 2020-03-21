@@ -435,7 +435,7 @@ static uae_u8* load_file(const char* path, const char* file, uae_u8* p, int* siz
     FILE* f = fopen(fname, "rb");
     if (!f) {
         if (exiterror) {
-            printf("Couldn't open '%s'\n", fname);
+            printf("load file Couldn't open '%s'\n", fname);
             exit(0);
         }
         return NULL;

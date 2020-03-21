@@ -3,7 +3,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void run_68k(void* user_data, const M68KTesterContext* context, M68KTesterRegisters* regs) {}
+void run_68k(void* user_data, const M68KTesterContext* context, M68KTesterRegisters* regs) {
+	printf("running test here\n");
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -15,7 +17,7 @@ int main() {
     settings.cpu_level = 0;     // 68000
 
     // Init the tester
-    res = M68KTester_init("data", &settings);
+    res = M68KTester_init("data/68000_Basic", &settings);
 
     if (res.error) {
         printf("failed to run: %s\n", res.error);
