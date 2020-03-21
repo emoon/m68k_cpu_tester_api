@@ -632,8 +632,6 @@ static uae_u8* load_file(const char* path, const char* file, uae_u8* p, int* siz
     int unpackoffset = 0;
     int size = 0;
 
-    printf("path %s filename %s\n", path, file);
-
 	// compressed files no supported with m68k cpu tester yet
 #ifndef M68K_CPU_TESTER
     join_path(fname, path, file, sizeof(fname));
