@@ -20,6 +20,7 @@
 
 #include "readcpu.h"
 
+
 static FILE *tablef;
 static int nextch = 0;
 
@@ -71,11 +72,15 @@ int main(int argc, char **argv)
     printf ("#include \"sysdeps.h\"\n");
     printf ("#include \"readcpu.h\"\n");
     printf ("struct instr_def defs68k[] = {\n");
-#if 0
-    tablef = fopen("table68k","r");
+#if 1
+    if (argc != 2) {
+        printf("expected table68k as input\n");
+        return -1;
+    }
+    tablef = fopen(argv[1],"r");
     if (tablef == NULL) {
-	fprintf(stderr, "table68k not found\n");
-	exit(1);
+        fprintf(stderr, "%s not found\n", argv[1]);
+        exit(1);
     }
 #else
     tablef = stdin;
