@@ -11,7 +11,7 @@ Usage:
 ## Testing the Musashi example
 
 1. Build the cputester that will generate the tests: `bazel build //gencpu:cputester`
-2. Run 'bazel-bin/gencpu/cputester' This will generate the tests in the `data` directory.
+2. Run `bazel-bin/gencpu/cputester` This will generate the tests in the `data` directory.
 3. Build the Musashi example using this command: `bazel build //musashi_example:musashi_example`
 4. Run `bazel-bin/musashi_example/musashi_example`
 
