@@ -2,7 +2,7 @@
 
 name: CI
 
-# Controls when the action will run. Triggers the workflow on push or pull request 
+# Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
   push:
@@ -30,6 +30,6 @@ jobs:
     - name: Build Windows
       if: matrix.os == 'windows'
       run: ./bazel.exe build //gencpu:cputester --verbose_failures
-    - name: Buind non-Windows
-      if: matrix.os == 'windows'
+    - name: Build non-Windows
+      if: matrix.os != 'windows'
       run: ./bazel build //gencpu:cputester --verbose_failures
