@@ -6,6 +6,7 @@ cc_binary(
     name = "build68k",
     includes = [".", "include"],
     srcs = [
+        "string_wrappers.h",
         "sysconfig.h",
         "target.h",
         "include/sysdeps.h",
@@ -27,6 +28,7 @@ cc_binary(
     name = "gencpu_prog",
     includes = [".", "include"],
     srcs = [
+        "string_wrappers.h",
         "sysconfig.h",
         "target.h",
         "include/sysdeps.h",
