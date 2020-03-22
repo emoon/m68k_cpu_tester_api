@@ -9,7 +9,7 @@ Usage:
 ## Dependencies
 
 1. To compile the code you need [Bazel](https://bazel.build) but the rules are simple so moving the code to any other build system should be straightforward.
-2. On Windows you need to follow the the steps to install the [MSYS2](https://docs.bazel.build/versions/master/install-windows.htm) package as it's needed by the code-generation.
+2. On Windows you need to follow the the steps to install the [MSYS2](https://docs.bazel.build/versions/master/install-windows.html) package as it's needed by the code-generation.
 
 ## Testing the Musashi example
 
