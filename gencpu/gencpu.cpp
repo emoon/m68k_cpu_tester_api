@@ -24,8 +24,8 @@
 
 #include "readcpu.h"
 
-#ifndef _WIN32
 #define ua(s) strdup(s)
+#ifndef _WIN32
 #define _vsnprintf vsnprintf
 #endif
 

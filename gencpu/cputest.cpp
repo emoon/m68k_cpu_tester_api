@@ -7,7 +7,7 @@
 #include "fpp.h"
 #include "string_wrappers.h"
 
-#include "zlib.h"
+//#include "zlib.h"
 
 #include "options.h"
 
@@ -1463,6 +1463,7 @@ static void fill_memory(void)
 static void compressfile(TCHAR *path, int flags)
 {
 	if (feature_gzip & flags) {
+		printf("compressfile: not supported!\n");
 		FILE *f = _tfopen(path, _T("rb"));
 		fseek(f, 0, SEEK_END);
 		int size = ftell(f);
@@ -1475,9 +1476,9 @@ static void compressfile(TCHAR *path, int flags)
 		_tunlink(path);
 		f = _tfopen(path, _T("wb"));
 		int fd = fileno(f);
-		gzFile gz = gzdopen(dup(fd), "wb9");
-		gzwrite(gz, mem, size);
-		gzclose(gz);
+		//gzFile gz = gzdopen(dup(fd), "wb9");
+		//gzwrite(gz, mem, size);
+		//gzclose(gz);
 		fclose(f);
 		free(mem);
 	} else {
@@ -3348,11 +3349,7 @@ static void test_mnemo(const TCHAR *path, const TCHAR *mnemo, const TCHAR *ovrfi
 		_tcscat(dir, fpsizes[opcodesize < 7 ? opcodesize : 2]);
 	}
 	memset(inst_name, 0, sizeof(inst_name));
-#ifndef _WIN32
 	strncpy(inst_name, dir + pathlen, sizeof(inst_name));
-#else
-	ua_copy(inst_name, sizeof(inst_name), dir + pathlen);
-#endif
 
 	opcodecnt = 0;
 	for (int opcode = 0; opcode < 65536; opcode++) {

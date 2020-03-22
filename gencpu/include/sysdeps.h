@@ -329,8 +329,8 @@ extern void gettimeofday( struct timeval *tv, void *blah );
 #define O_RDWR   _O_RDWR
 #define O_CREAT  _O_CREAT
 #define O_TRUNC  _O_TRUNC
-#define strcasecmp _tcsicmp
-#define strncasecmp _tcsncicmp
+//#define strcasecmp _tcsicmp
+//#define strncasecmp _tcsncicmp
 #define W_OK 0x2
 #define R_OK 0x4
 #define STAT struct stat

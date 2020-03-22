@@ -571,10 +571,14 @@ typedef long uae_atomic;
 #endif
 
 /* Define if you have the <utime.h> header file.  */
+#ifndef _WIN32
 #define HAVE_UTIME_H 1
+#endif
 
 /* Define if you have the <windows.h> header file.  */
-//#define HAVE_WINDOWS_H 1
+#ifdef _WIN32
+#define HAVE_WINDOWS_H 1
+#endif
 
 #define FSDB_DIR_SEPARATOR '\\'
 #define FSDB_DIR_SEPARATOR_S _T("\\")

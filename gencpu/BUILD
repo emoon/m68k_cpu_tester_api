@@ -61,10 +61,6 @@ genrule(
 cc_binary(
     name = "cputester",
     includes = [".", "include"],
-    copts = [
-    	"-O2", "-g",
-        "-Wno-sign-compare",
-    ],
     defines = [
         "CPUEMU_90",
         "CPUEMU_91",

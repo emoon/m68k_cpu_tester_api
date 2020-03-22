@@ -11,17 +11,9 @@
 #include <ctype.h>
 
 #include "readcpu.h"
+#include "string_wrappers.h"
 
 int nr_cpuop_funcs;
-
-#ifndef _WIN32
-#define stricmp strncasecmp
-#define _tcsncmp strncmp
-#define _tcscmp strcmp
-#define strnicmp strncasecmp
-#define _istspace isspace
-#define _tcslen strlen
-#endif
 
 struct mnemolookup lookuptab[] = {
 	{ i_ILLG, _T("ILLEGAL"), NULL, 0 },

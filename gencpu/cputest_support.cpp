@@ -8,7 +8,9 @@
 #include "fpp.h"
 #include "mmu_common.h"
 #include "cpummu030.h"
+#include "string_wrappers.h"
 
+/*
 #ifndef _WIN32
 #define stricmp strncasecmp
 #define _tcsncmp strncmp
@@ -20,6 +22,7 @@
 #define _vsntprintf vsnprintf
 #define wprintf printf
 #endif
+*/
 
 cpuop_func *loop_mode_table[65536];
 

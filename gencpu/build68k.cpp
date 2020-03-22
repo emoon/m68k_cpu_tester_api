@@ -19,15 +19,10 @@
 #include <ctype.h>
 
 #include "readcpu.h"
-
+#include "string_wrappers.h"
 
 static FILE *tablef;
 static int nextch = 0;
-
-#ifndef _WIN32
-#define stricmp strncasecmp
-#define strnicmp strncasecmp
-#endif
 
 static void getnextch(void)
 {

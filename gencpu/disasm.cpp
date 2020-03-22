@@ -1141,14 +1141,10 @@ int m68k_asm(TCHAR *sline, uae_u16 *out, uaecptr pc)
 	}
 	*p = 0;
 
-#ifndef _WIN32
     char* temp = line;
     for (;*temp;++temp) {
         *temp = toupper((unsigned char) *temp);
     }
-#else
-    to_upper(line, _tcstrlen(line));
-#endif
 
 	p = line;
 	while (*p && *p != ' ')
