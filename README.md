@@ -1,5 +1,7 @@
 # m68k_cpu_tester_api
 
+[![Build Status](https://github.com/emoon/m68k_cpu_tester_api/workflows/CI/badge.svg)](https://github.com/emoon/m68k_cpu_tester_api/actions?workflow=CI)
+
 This repo makes an API around the cpu tester from WinUAE that can be found [here](https://github.com/tonioni/WinUAE/tree/master/cputest) with more info. The cputester in WinUAE is mainly built to run as an executable on Amiga but what this does is wraps the tester and allows it to be used for other use-cases such as emulators or test-beds for FPGA implementations.
 
 Usage:
