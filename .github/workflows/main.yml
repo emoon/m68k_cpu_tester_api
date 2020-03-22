@@ -32,4 +32,4 @@ jobs:
       run: ./bazel.exe build //gencpu:cputester --verbose_failures
     - name: Build non-Windows
       if: matrix.os != 'windows'
-      run: ./bazel build //gencpu:cputester --verbose_failures
+      run: bazel build //gencpu:cputester --verbose_failures
